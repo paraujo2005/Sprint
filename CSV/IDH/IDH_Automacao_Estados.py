@@ -7,7 +7,7 @@
 pip install selenium pandas openpyxl minio webdriver-manager
 
 
-# In[21]:
+# In[23]:
 
 
 import os
@@ -37,6 +37,7 @@ bucket_name = "idh"
 # Configuração do Chrome
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument("--allow-running-insecure-content")
+chrome_options.add_argument("--unsafely-treat-insecure-origin-as-secure=http://www.atlasbrasil.org.br")
 chrome_options.add_argument("--headless")  # Se não precisar de interface gráfica
 
 # Usando o ChromeDriverManager para garantir que o ChromeDriver esteja disponível
@@ -71,7 +72,7 @@ try:
     try:
         # Verificando a presença do arquivo na pasta de downloads
         downloads_dir = os.path.join(os.path.expanduser("~"), "Downloads")  # Diretório padrão de downloads
-        arquivo_xlsx = [f for f in os.listdir(downloads_dir) if f.endswith('.xlsx')]
+        arquivo_xlsx = [f for f in os.listdir(downloads_dir) if f == "data.xlsx"]
     except Exception as e:
         logging.error(f"Erro ao listar os arquivos na pasta de downloads: {e}")
 
@@ -105,6 +106,14 @@ except Exception as e:
 
 finally:
     # Finalize o Selenium
+    logging.info("Apagando Arquivo...")
+    os.remove("data.xlsx")
     logging.info("Fechando o navegador...")
     driver.quit()
+
+
+# In[ ]:
+
+
+
 
