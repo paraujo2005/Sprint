@@ -37,7 +37,7 @@ bucket_name = "pof"
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument("--allow-running-insecure-content")
 chrome_options.add_argument("--unsafely-treat-insecure-origin-as-secure=https://sidra.ibge.gov.br/pesquisa/pof/tabelas")
-#chrome_options.add_argument("--headless")  # Se não precisar de interface gráfica
+chrome_options.add_argument("--headless")  # Se não precisar de interface gráfica
 
 # Usando o ChromeDriverManager para garantir que o ChromeDriver esteja disponível
 service = Service(ChromeDriverManager().install())
