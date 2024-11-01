@@ -14,6 +14,7 @@ import os
 import time
 import logging
 import zipfile
+import tempfile
 from io import BytesIO
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -21,6 +22,7 @@ from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 from minio import Minio
+from pathlib import Path
 
 # Configuração de logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -38,7 +40,7 @@ minio_client = Minio(
     secret_key="minioadmin",
     secure=False
 )
-bucket_name = "aux-brasil"
+bucket_name = "aux-emergencial"
 
 # Verifica se o bucket existe e cria se não existir
 if not minio_client.bucket_exists(bucket_name):
@@ -48,7 +50,7 @@ if not minio_client.bucket_exists(bucket_name):
 # Configuração do Chrome
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument("--allow-running-insecure-content")
-chrome_options.add_argument("--unsafely-treat-insecure-origin-as-secure=https://portaldatransparencia.gov.br/download-de-dados/auxilio-brasil")
+chrome_options.add_argument("--unsafely-treat-insecure-origin-as-secure=https://portaldatransparencia.gov.br/download-de-dados/auxilio-emergencial")
 chrome_options.add_experimental_option("prefs", {"download.default_directory": download_path})
 
 # Usando o ChromeDriverManager para garantir que o ChromeDriver esteja disponível
@@ -58,7 +60,7 @@ driver = webdriver.Chrome(service=service, options=chrome_options)
 try:
     # Acessar site
     logging.info("Acessando o site do Portal de Transparência...")
-    driver.get('https://portaldatransparencia.gov.br/download-de-dados/auxilio-brasil')
+    driver.get('https://portaldatransparencia.gov.br/download-de-dados/auxilio-emergencial')
 
     # Fechar o modal de cookies, se presente
     try:
@@ -76,7 +78,8 @@ try:
     options_ano = select_ano.options
 
     for option_ano in options_ano:
-        select_ano.select_by_value(option_ano.get_attribute('value'))
+        ano_value = option_ano.get_attribute('value')
+        select_ano.select_by_value(ano_value)
         logging.info(f"Ano selecionado: {option_ano.text}")
         time.sleep(1)
 
@@ -96,13 +99,14 @@ try:
             botao.click()
             
             # Aguardar até o arquivo de download completar
-            time.sleep(20)
-            while not any(fname.endswith("_AuxilioBrasil.zip") for fname in os.listdir(download_path)):
-                logging.info("Aguardando a conclusão do download...")
-                time.sleep(2)  # Verifica a cada 2 segundos
+            download_in_progress = True
+            while download_in_progress:
+                download_in_progress = not any(fname.endswith("_AuxilioEmergencial.zip") for fname in os.listdir(download_path))
+                logging.info("Aguardando a conclusão do download...")      
+                time.sleep(5)
 
             # Processar arquivos baixados (ZIP)
-            downloaded_files = [f for f in os.listdir(download_path) if f.endswith("_AuxilioBrasil.zip")]
+            downloaded_files = [f for f in os.listdir(download_path) if f.endswith("_AuxilioEmergencial.zip")]
             for zip_file_name in downloaded_files:
                 zip_file_path = os.path.join(download_path, zip_file_name)
 
@@ -110,19 +114,27 @@ try:
                     for file_name in zip_ref.namelist():
                         if file_name.endswith('.csv'):
                             with zip_ref.open(file_name) as csv_file:
-                                # Criar um buffer para leitura do arquivo CSV
-                                csv_buffer = BytesIO(csv_file.read())
-                                
-                                # Upload do arquivo CSV para o MinIO
-                                logging.info(f"Enviando o arquivo CSV para o bucket {bucket_name} no MinIO...")
-                                minio_client.put_object(
-                                    bucket_name,
-                                    file_name,
-                                    csv_buffer,
-                                    csv_buffer.getbuffer().nbytes,
-                                    content_type='text/csv'
-                                )
-                                logging.info(f"Arquivo {file_name} enviado para o MinIO com sucesso.")
+                                # Criar um arquivo temporário no disco
+                                with tempfile.TemporaryFile() as temp_file:
+                                    temp_file.write(csv_file.read())  # Escreve dados no arquivo temporário
+                                    
+                                    # Verifica se o arquivo não está vazio
+                                    file_size = temp_file.tell()
+                                    if file_size > 0:
+                                        temp_file.seek(0)  # Retorna ao início para leitura e upload
+
+                                        # Upload do arquivo CSV para o MinIO
+                                        logging.info(f"Enviando o arquivo CSV para o bucket {bucket_name} no MinIO...")
+                                        minio_client.put_object(
+                                            bucket_name,
+                                            file_name,
+                                            temp_file,
+                                            file_size,
+                                            content_type='text/csv'
+                                        )
+                                        logging.info(f"Arquivo {file_name} enviado para o MinIO com sucesso.")
+                                    else:
+                                        logging.warning(f"O arquivo {file_name} está vazio e não será enviado.")
                 
                 # Remover o arquivo ZIP local após o upload
                 os.remove(zip_file_path)
@@ -139,4 +151,10 @@ finally:
         if fname.endswith(".crdownload"):
             os.remove(os.path.join(download_path, fname))
             logging.info(f"Arquivo temporário {fname} removido com sucesso.")
+
+
+# In[ ]:
+
+
+
 
