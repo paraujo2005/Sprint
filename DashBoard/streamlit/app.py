@@ -197,22 +197,22 @@ def pof_page(local):
                     
 # Puxando dados
 # IDH
-df_idh_estados_2010 = pd.read_csv("./dados/IDH/IDH_Estados_2010.csv")
-df_idh_estados_2021 = pd.read_csv("./dados/IDH/IDH_Estados_2021.csv")
-df_idh_municipios = pd.read_csv("./dados/IDH/IDH_Municipios.csv")
-df_idh_rm_2010 = pd.read_csv("./dados/IDH/IDH_RM_2010.csv")
-df_idh_rm_2021 = pd.read_csv("./dados/IDH/IDH_RM_2021.csv")
+df_idh_estados_2010 = pd.read_csv("DashBoard/streamlit/dados/IDH/IDH_Estados_2010.csv")
+df_idh_estados_2021 = pd.read_csv("DashBoard/streamlit/dados/IDH/IDH_Estados_2021.csv")
+df_idh_municipios = pd.read_csv("DashBoard/streamlit/dados/IDH/IDH_Municipios.csv")
+df_idh_rm_2010 = pd.read_csv("DashBoard/streamlit/dados/IDH/IDH_RM_2010.csv")
+df_idh_rm_2021 = pd.read_csv("DashBoard/streamlit/dados/IDH/IDH_RM_2021.csv")
 
 # POF
-df_pof_alimento = pd.read_csv("./dados/POF/POF_Alimento_filtrado.csv")
-df_pof_familias = pd.read_csv("./dados/POF/POF_Num_Familia_Classes_filtrado.csv")
-df_pof_despesa = pd.read_csv("./dados/POF/POF_Despesa_Classe_filtrado.csv")  
-df_pof_rendimento = pd.read_csv("./dados/POF/POF_Rendimento_Classe_filtrado.csv") 
+df_pof_alimento = pd.read_csv("DashBoard/streamlit/dados/POF/POF_Alimento_filtrado.csv")
+df_pof_familias = pd.read_csv("DashBoard/streamlit/dados/POF/POF_Num_Familia_Classes_filtrado.csv")
+df_pof_despesa = pd.read_csv("DashBoard/streamlit/dados/POF/POF_Despesa_Classe_filtrado.csv")  
+df_pof_rendimento = pd.read_csv("DashBoard/streamlit/dados/POF/POF_Rendimento_Classe_filtrado.csv") 
 
 # Configurações Sidebar
 with st.sidebar:
     # Definindo Titulo
-    st.image("./imagens/brb.png", width=500)
+    st.image("DashBoard/streamlit/imagens/brb.png", width=500)
 
     # Selecionar modulo
     select_modulo = st.selectbox('Selecione um Módulo:', ["Geográfico", "Social"])
